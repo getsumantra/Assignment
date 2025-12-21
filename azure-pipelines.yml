@@ -2,50 +2,50 @@ trigger: none
 
 pool: for_each_pool
 
-# parameters:
-#   - name: environment
-#     displayName: Parameters
-#     type: string
-#     default: dev
-#     values:
-#       - dev
-#       - prod
+parameters:
+  - name: environment
+    displayName: Parameters
+    type: string
+    default: dev
+    values:
+      - dev
+      - prod
 
 stages:
-#   - stage: build
-#     jobs:
-#       - job: build
-#         steps:
-#         - task: TerraformInstaller@1
-#           inputs:
-#             terraformVersion: 'latest'
+  - stage: build
+    jobs:
+      - job: build
+        steps:
+        - task: TerraformInstaller@1
+          inputs:
+            terraformVersion: 'latest'
 
-        # - task: TerraformTask@5
-        #   displayName: terraform init
-        #   inputs:
-        #     provider: 'azurerm'
-        #     command: 'init'
-        #     workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-        #     backendServiceArm: 'for_each_svc'
-        #     backendAzureRmResourceGroupName: 'rg-pr'
-        #     backendAzureRmStorageAccountName: 'stg502'
-        #     backendAzureRmContainerName: 'container01'
-        #     backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+        - task: TerraformTask@5
+          displayName: terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+            backendServiceArm: 'for_each_svc'
+            backendAzureRmResourceGroupName: 'rg-pr'
+            backendAzureRmStorageAccountName: 'stg502'
+            backendAzureRmContainerName: 'container01'
+            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
 
-        # - task: TerraformTask@5
-        #   displayName: terraform validate
-        #   inputs:
-        #     provider: 'azurerm'
-        #     command: 'validate'
-        #     workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        - task: TerraformTask@5
+          displayName: terraform validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
-        # - task: TerraformTask@5
-        #   displayName: terraform plan
-        #   inputs:
-        #     provider: 'azurerm'
-        #     command: 'plan'
-        #     workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-        #     environmentServiceNameAzureRM: 'for_each_svc'
+        - task: TerraformTask@5
+          displayName: terraform plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+            environmentServiceNameAzureRM: 'for_each_svc'
 
   
   - stage: securityScan
@@ -55,33 +55,47 @@ stages:
         displayName: Run Security Scans
         steps:
 
-        # ---------- TFSEC ----------
-        # - task: tfsec@1
-        #   displayName: Run tfsec
-        #   condition: succeededOrFailed()
-        #   inputs:
-        #     version: 'v1.26.0'
-        #     dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        # ---------- TFSEC -----------------------------------
+        - task: tfsec@1
+          displayName: Tfsec-scan
+          inputs:
+            version: 'v1.26.0'
+            dir: '$(System.DefaultWorkingDirectory)/infra/dev'
 
-        # # ---------- TRIVY ----------
-        # - task: trivy@2
-        #   displayName: Run trivy-scan
-        #   inputs:
-        #     version: 'latest'
-        #     type: 'filesystem'
-        #     target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-        #     scanners: 'license, misconfig, secret, vuln'
-        #     severities: 'UNKNOWN, LOW, MEDIUM, HIGH, CRITICAL'
-        #     ignoreScanErrors: true
-        #     failOnSeverityThreshold: 'MEDIUM'
-        #     reports: 'junit'
-        #     publish: true
-        
+        #------------TFLint-----------------------------------
         - task: PowerShell@2
-          displayName: Run Checkov-scan
+          displayName: Tflint-scan
+          continueOnError: true
           inputs:
             targetType: 'inline'
-            script: 'checkov -d .'
+            script: |
+              tflint --version
+              tflint /recursive
+            errorActionPreference: 'continue'
+
+        # ---------- TRIVY ------------------------------------
+        - task: trivy@2
+          displayName: Trivy-scan
+          inputs:
+            version: 'latest'
+            type: 'filesystem'
+            target: '$(System.DefaultWorkingDirectory)/infra/dev'
+            scanners: 'misconfig, secret, vuln'
+            ignoreUnfixed: true
+            showSuppressed: true
+            ignoreScanErrors: true
+            reports: 'junit'
+            publish: true
+        
+        #--------------Checkov---------------------------------
+        - task: PowerShell@2
+          displayName: Checkov-scan
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              checkov -v
+              checkov -d $(System.DefaultWorkingDirectory)/infra/dev -o Junit.xml > checkovres.xml
 
         
 
