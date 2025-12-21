@@ -1,0 +1,120 @@
+trigger:
+ branches:
+   include:
+     - feature/*
+     - main
+
+pool: sam-pool
+
+parameters:
+  - name: manualValidation
+    displayName: Manual Validation
+    type: string
+    default: yes
+    values:
+      - yes
+      - no
+
+stages:
+  - stage: Build
+    displayName: Build stage
+    jobs:
+      - job: initValidatePlan
+        displayName: init validate plan
+        pool: sam-pool
+        steps:
+            
+        - task: TerraformTask@5
+          displayName: terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/preprd'
+            backendServiceArm: 'Service Connection'
+            backendAzureRmStorageAccountName: 'stchaosfuel'
+            backendAzureRmContainerName: 'chaoscontainer'
+            backendAzureRmKey: 'terraform.tfstate'
+
+        - task: TerraformTask@5
+          displayName: terraform validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/preprd'
+
+        - task: TerraformTask@5
+          displayName: terraform plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/preprd'
+            environmentServiceNameAzureRM: 'Service Connection'
+
+  # - stage: Scan
+  #   displayName: scan stage
+  #   dependsOn: Build
+  #   jobs:
+  #     - job: scanjob
+  #       displayName: tfsec scan
+  #       pool: sam-pool
+  #       steps:
+  #       - task: tfsec@1
+  #         inputs:
+  #           version: 'v1.26.0'
+  #           dir: '$(System.DefaultWorkingDirectory)/infra/preprd'
+
+  
+  - stage: manualValidation
+    displayName: Maual validationste
+    dependsOn: Build
+    jobs:
+      - job: Manualvalidation
+        condition: eq('${{ parameters.manualValidation }}', 'yes')
+        displayName: manual validation
+        pool: server                        #dev.azure.com
+        steps:
+        - task: ManualValidation@1
+          inputs:
+            notifyUsers: 'sumantra93@outlook.com'
+            approvers: 'sumantra93@outlook.com'
+            instructions: 'check the above condition first'
+
+
+  - stage: Deploy
+    displayName: Deploy stage
+    dependsOn: 
+    - manualValidation
+    # - Scan
+    jobs:
+      - job: terraformDeploy
+        displayName: terraform init
+        pool: sam-pool
+        steps:
+
+        - task: TerraformInstaller@1
+          displayName: terraform installer
+          inputs:
+            terraformVersion: 'latest'
+            
+        - task: TerraformTask@5
+          displayName: terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/preprd'
+            backendServiceArm: 'Service Connection'
+            backendAzureRmStorageAccountName: 'stchaosfuel'
+            backendAzureRmContainerName: 'chaoscontainer'
+            backendAzureRmKey: 'terraform.tfstate'
+
+        - task: TerraformTask@5
+          displayName: terraform apply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/preprd'
+            environmentServiceNameAzureRM: 'Service Connection'
+
+  
+
+        

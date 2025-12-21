@@ -1,0 +1,157 @@
+trigger: none
+
+pool: for_each_pool
+
+# parameters:
+#   - name: environment
+#     displayName: Parameters
+#     type: string
+#     default: dev
+#     values:
+#       - dev
+#       - prod
+
+stages:
+#   - stage: build
+#     jobs:
+#       - job: build
+#         steps:
+#         - task: TerraformInstaller@1
+#           inputs:
+#             terraformVersion: 'latest'
+
+        # - task: TerraformTask@5
+        #   displayName: terraform init
+        #   inputs:
+        #     provider: 'azurerm'
+        #     command: 'init'
+        #     workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        #     backendServiceArm: 'for_each_svc'
+        #     backendAzureRmResourceGroupName: 'rg-pr'
+        #     backendAzureRmStorageAccountName: 'stg502'
+        #     backendAzureRmContainerName: 'container01'
+        #     backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+
+        # - task: TerraformTask@5
+        #   displayName: terraform validate
+        #   inputs:
+        #     provider: 'azurerm'
+        #     command: 'validate'
+        #     workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+
+        # - task: TerraformTask@5
+        #   displayName: terraform plan
+        #   inputs:
+        #     provider: 'azurerm'
+        #     command: 'plan'
+        #     workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        #     environmentServiceNameAzureRM: 'for_each_svc'
+
+  
+  - stage: securityScan
+    displayName: Security Scan
+    jobs:
+      - job: securityScan
+        displayName: Run Security Scans
+        steps:
+
+        # ---------- TFSEC ----------
+        # - task: tfsec@1
+        #   displayName: Run tfsec
+        #   condition: succeededOrFailed()
+        #   inputs:
+        #     version: 'v1.26.0'
+        #     dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+
+        # # ---------- TRIVY ----------
+        # - task: trivy@2
+        #   displayName: Run trivy-scan
+        #   inputs:
+        #     version: 'latest'
+        #     type: 'filesystem'
+        #     target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        #     scanners: 'license, misconfig, secret, vuln'
+        #     severities: 'UNKNOWN, LOW, MEDIUM, HIGH, CRITICAL'
+        #     ignoreScanErrors: true
+        #     failOnSeverityThreshold: 'MEDIUM'
+        #     reports: 'junit'
+        #     publish: true
+        
+        - task: PowerShell@2
+          displayName: Run Checkov-scan
+          inputs:
+            targetType: 'inline'
+            script: 'checkov -d .'
+
+        
+
+  # - stage: infraCost
+  #   displayName: infracost scan
+  #   dependsOn: securityScan
+  #   jobs:
+  #     - job: infraCost
+  #       displayName: Infracost
+  #       continueOnError: true
+  #       steps:
+
+  #       - task: PowerShell@2
+  #         displayName: Install Infracost
+  #         continueOnError: true
+  #         inputs:
+  #           targetType: 'inline'
+  #           script: |
+  #             Write-Host "Installing Infracost via Chocolatey..."
+  #             choco install infracost -y || Write-Host "Infracost installation failed but continuing..."
+  #             infracost --version || Write-Host "Infracost version check failed..."
+
+  #       - task: PowerShell@2
+  #         displayName: Run Infracost Breakdown
+  #         continueOnError: true
+  #         inputs:
+  #           targetType: 'inline'
+  #           script: |
+  #             infracost breakdown `
+  #               --path "$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}" `
+  #               --format table `
+  #               || Write-Host "Infracost scan failed but pipeline will continue..."
+
+
+  # - stage: manualValidation
+  #   displayName: manual validation
+  #   dependsOn: build
+  #   jobs:
+  #     - job: manulaValidation
+  #       pool: server
+  #       displayName: manual validation
+  #       steps:
+  #       - task: ManualValidation@1
+  #         inputs:
+  #           notifyUsers: 'getsumantra@gmail.com'
+
+  # - stage: deployStage
+  #   displayName: deploy stage
+  #   dependsOn: manualValidation
+  #   jobs:
+  #     - job: deployStage
+  #       displayName: apply
+  #       steps:
+  #       - task: DownloadBuildArtifacts@1
+  #         inputs:
+  #           buildType: 'current'
+  #           downloadType: 'single'
+  #           artifactName: 'build-artifacts'
+  #           downloadPath: '$(System.ArtifactsDirectory)/pipeline'
+        
+  #       - task: TerraformTask@5
+  #         displayName: terraform apply
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'apply'
+  #           workingDirectory: '$(System.ArtifactsDirectory)/pipeline'
+  #           commandOptions: '--auto-approve'
+  #           environmentServiceNameAzureRM: 'for_each_svc'
+
+        
+      
+
+            
