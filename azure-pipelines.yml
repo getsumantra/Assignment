@@ -1,6 +1,6 @@
 trigger: none
 
-pool: for_each_pool
+pool: vm-agent
 
 parameters:
   - name: environment
@@ -26,7 +26,7 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            backendServiceArm: 'for_each_svc'
+            backendServiceArm: 'vm01-svc'
             backendAzureRmResourceGroupName: 'rg-pr'
             backendAzureRmStorageAccountName: 'stg502'
             backendAzureRmContainerName: 'container01'
@@ -45,7 +45,7 @@ stages:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            environmentServiceNameAzureRM: 'for_each_svc'
+            environmentServiceNameAzureRM: 'vm01-svc'
 
   
   - stage: securityScan
@@ -60,7 +60,7 @@ stages:
           displayName: Tfsec-scan
           inputs:
             version: 'v1.26.0'
-            dir: '$(System.DefaultWorkingDirectory)/infra/dev'
+            dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
         #------------TFLint-----------------------------------
         - task: PowerShell@2
@@ -79,7 +79,7 @@ stages:
           inputs:
             version: 'latest'
             type: 'filesystem'
-            target: '$(System.DefaultWorkingDirectory)/infra/dev'
+            target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
             scanners: 'misconfig, secret, vuln'
             ignoreUnfixed: true
             showSuppressed: true
@@ -95,7 +95,7 @@ stages:
             targetType: 'inline'
             script: |
               checkov -v
-              checkov -d $(System.DefaultWorkingDirectory)/infra/dev -o Junit.xml > checkovres.xml
+              checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
 
         
 
@@ -163,7 +163,7 @@ stages:
   #           command: 'apply'
   #           workingDirectory: '$(System.ArtifactsDirectory)/pipeline'
   #           commandOptions: '--auto-approve'
-  #           environmentServiceNameAzureRM: 'for_each_svc'
+  #           environmentServiceNameAzureRM: 'vm01-svc'
 
         
       
