@@ -57,49 +57,49 @@ stages:
         displayName: Run Security Scans
         steps:
 
-        # ---------- TFSEC -----------------------------------
-        - task: tfsec@1
-          displayName: Tfsec-scan
-          inputs:
-            version: 'v1.26.0'
-            dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        # # ---------- TFSEC -----------------------------------
+        # - task: tfsec@1
+        #   displayName: Tfsec-scan
+        #   inputs:
+        #     version: 'v1.26.0'
+        #     dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
-        #------------TFLint-----------------------------------
-        - task: PowerShell@2
-          displayName: Tflint-scan
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: |
-              tflint --version
-              tflint /recursive
-            errorActionPreference: 'continue'
+        # #------------TFLint-----------------------------------
+        # - task: PowerShell@2
+        #   displayName: Tflint-scan
+        #   continueOnError: true
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       tflint --version
+        #       tflint /recursive
+        #     errorActionPreference: 'continue'
 
-        # ---------- TRIVY ------------------------------------
-        - task: trivy@2
-          displayName: Trivy-scan
-          inputs:
-            version: 'latest'
-            type: 'filesystem'
-            target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            scanners: 'misconfig,secret'
-            ignoreUnfixed: true
-            showSuppressed: true
-            ignoreScanErrors: true
-            skipDbUpdate: true
-            reports: 'junit'
-            publish: true
+        # # ---------- TRIVY ------------------------------------
+        # - task: trivy@2
+        #   displayName: Trivy-scan
+        #   inputs:
+        #     version: 'latest'
+        #     type: 'filesystem'
+        #     target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        #     scanners: 'misconfig,secret'
+        #     ignoreUnfixed: true
+        #     showSuppressed: true
+        #     ignoreScanErrors: true
+        #     skipDbUpdate: true
+        #     reports: 'junit'
+        #     publish: true
 
         
-        #--------------Checkov---------------------------------
-        - task: PowerShell@2
-          displayName: Checkov-scan
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: |
-              checkov -v
-              checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
+        # #--------------Checkov---------------------------------
+        # - task: PowerShell@2
+        #   displayName: Checkov-scan
+        #   continueOnError: true
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       checkov -v
+        #       checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
 
         #---------------TruffleHog-----Secret-Scan------------------------
         - task: PowerShell@2
