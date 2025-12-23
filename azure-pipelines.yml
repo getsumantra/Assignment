@@ -12,10 +12,11 @@ parameters:
       - prod
 
 stages:
-#   - stage: build
-#     jobs:
-#       - job: build
-#         steps:
+  # - stage: build
+  #   displayName: build stage
+    # jobs:
+    #   - job: build
+    #     steps:
 #         - task: TerraformInstaller@1
 #           inputs:
 #             terraformVersion: 'latest'
@@ -49,11 +50,12 @@ stages:
 
   
   # - stage: securityScan
+  #   dependsOn: build
   #   displayName: Security Scan
-  #   jobs:
-  #     - job: securityScan
-  #       displayName: Run Security Scans
-  #       steps:
+    # jobs:
+    #   - job: securityScan
+    #     displayName: Run Security Scans
+    #     steps:
 
   #       # ---------- TFSEC -----------------------------------
   #       - task: tfsec@1
@@ -113,39 +115,27 @@ stages:
           inputs:
             targetType: 'inline'
             script: 'infracost breakdown --path $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-        
-
-  #       - task: PowerShell@2
-  #         displayName: Run Infracost Breakdown
-  #         continueOnError: true
-  #         inputs:
-  #           targetType: 'inline'
-  #           script: |
-  #             infracost breakdown `
-  #               --path "$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}" `
-  #               --format table `
-  #               || Write-Host "Infracost scan failed but pipeline will continue..."
 
 
-  # - stage: manualValidation
-  #   displayName: manual validation
-  #   dependsOn: build
-  #   jobs:
-  #     - job: manulaValidation
-  #       pool: server
-  #       displayName: manual validation
-  #       steps:
-  #       - task: ManualValidation@1
-  #         inputs:
-  #           notifyUsers: 'getsumantra@gmail.com'
+  - stage: manualValidation
+    displayName: manual validation
+    # dependsOn: build
+    jobs:
+      - job: manulaValidation
+        pool: server
+        displayName: manual validation
+        steps:
+        - task: ManualValidation@1
+          inputs:
+            notifyUsers: 'getsumantra@gmail.com'
 
   # - stage: deployStage
   #   displayName: deploy stage
   #   dependsOn: manualValidation
-  #   jobs:
-  #     - job: deployStage
-  #       displayName: apply
-  #       steps:
+    # jobs:
+    #   - job: deployStage
+    #     displayName: apply
+    #     steps:
   #       - task: DownloadBuildArtifacts@1
   #         inputs:
   #           buildType: 'current'
