@@ -120,7 +120,7 @@ stages:
 
   - stage: manualValidation
     displayName: manual validation
-    # dependsOn: build
+    dependsOn: build
     jobs:
       - job: manulaValidation
         pool: server
