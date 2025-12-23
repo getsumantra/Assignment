@@ -12,45 +12,45 @@ parameters:
       - prod
 
 stages:
-  - stage: build
-    displayName: build stage
-    jobs:
-      - job: build
-        steps:
-        - task: TerraformInstaller@1
-          inputs:
-            terraformVersion: 'latest'
+  # - stage: build
+  #   displayName: build stage
+  #   jobs:
+  #     - job: build
+  #       steps:
+  #       - task: TerraformInstaller@1
+  #         inputs:
+  #           terraformVersion: 'latest'
 
-        - task: TerraformTask@5
-          displayName: terraform init
-          inputs:
-            provider: 'azurerm'
-            command: 'init'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            backendServiceArm: 'vm01-svc'
-            backendAzureRmResourceGroupName: 'rg-pr'
-            backendAzureRmStorageAccountName: 'stg502'
-            backendAzureRmContainerName: 'container01'
-            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+  #       - task: TerraformTask@5
+  #         displayName: terraform init
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'init'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #           backendServiceArm: 'vm01-svc'
+  #           backendAzureRmResourceGroupName: 'rg-pr'
+  #           backendAzureRmStorageAccountName: 'stg502'
+  #           backendAzureRmContainerName: 'container01'
+  #           backendAzureRmKey: '${{ parameters.environment }}.tfstate'
 
-        - task: TerraformTask@5
-          displayName: terraform validate
-          inputs:
-            provider: 'azurerm'
-            command: 'validate'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #       - task: TerraformTask@5
+  #         displayName: terraform validate
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'validate'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
-        - task: TerraformTask@5
-          displayName: terraform plan
-          inputs:
-            provider: 'azurerm'
-            command: 'plan'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            environmentServiceNameAzureRM: 'vm01-svc'
+  #       - task: TerraformTask@5
+  #         displayName: terraform plan
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'plan'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #           environmentServiceNameAzureRM: 'vm01-svc'
 
   
   - stage: securityScan
-    dependsOn: build
+    # dependsOn: build
     displayName: Security Scan
     jobs:
       - job: securityScan
@@ -109,59 +109,59 @@ stages:
             targetType: 'inline'
             script: 'trufflehog filesystem . --json > results.json'
 
-  - stage: infraCost
-    displayName: infracost scan
-    dependsOn: securityScan
-    jobs:
-      - job: infraCost
-        displayName: Infracost
-        continueOnError: true
-        steps:
-        - task: PowerShell@2
-          displayName: infracost analysis
-          inputs:
-            targetType: 'inline'
-            script: 'infracost breakdown --path $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  # - stage: infraCost
+  #   displayName: infracost scan
+  #   dependsOn: securityScan
+  #   jobs:
+  #     - job: infraCost
+  #       displayName: Infracost
+  #       continueOnError: true
+  #       steps:
+  #       - task: PowerShell@2
+  #         displayName: infracost analysis
+  #         inputs:
+  #           targetType: 'inline'
+  #           script: 'infracost breakdown --path $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
 
-  - stage: manualValidation
-    displayName: manual validation
-    dependsOn: securityScan
-    jobs:
-      - job: manulaValidation
-        pool: server
-        displayName: manual validation
-        steps:
-        - task: ManualValidation@1
-          inputs:
-            notifyUsers: 'getsumantra@gmail.com'
+  # - stage: manualValidation
+  #   displayName: manual validation
+  #   dependsOn: securityScan
+  #   jobs:
+  #     - job: manulaValidation
+  #       pool: server
+  #       displayName: manual validation
+  #       steps:
+  #       - task: ManualValidation@1
+  #         inputs:
+  #           notifyUsers: 'getsumantra@gmail.com'
 
-  - stage: deployStage
-    displayName: deploy stage
-    dependsOn: manualValidation
-    jobs:
-      - job: deployStage
-        displayName: apply
-        steps:
-        - task: TerraformTask@5
-          displayName: terraform init
-          inputs:
-            provider: 'azurerm'
-            command: 'init'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            backendServiceArm: 'vm01-svc'
-            backendAzureRmResourceGroupName: 'rg-pr'
-            backendAzureRmStorageAccountName: 'stg502'
-            backendAzureRmContainerName: 'container01'
-            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
-        - task: TerraformTask@5
-          displayName: terraform apply
-          inputs:
-            provider: 'azurerm'
-            command: 'apply'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            commandOptions: '--auto-approve'
-            environmentServiceNameAzureRM: 'vm01-svc'
+  # - stage: deployStage
+  #   displayName: deploy stage
+  #   dependsOn: manualValidation
+  #   jobs:
+  #     - job: deployStage
+  #       displayName: apply
+  #       steps:
+  #       - task: TerraformTask@5
+  #         displayName: terraform init
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'init'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #           backendServiceArm: 'vm01-svc'
+  #           backendAzureRmResourceGroupName: 'rg-pr'
+  #           backendAzureRmStorageAccountName: 'stg502'
+  #           backendAzureRmContainerName: 'container01'
+  #           backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+  #       - task: TerraformTask@5
+  #         displayName: terraform apply
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'apply'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #           commandOptions: '--auto-approve'
+  #           environmentServiceNameAzureRM: 'vm01-svc'
 
         
       
