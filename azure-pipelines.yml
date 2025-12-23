@@ -103,7 +103,7 @@ stages:
 
   - stage: infraCost
     displayName: infracost scan
-    dependsOn: securityScan
+    # dependsOn: securityScan
     jobs:
       - job: infraCost
         displayName: Infracost
