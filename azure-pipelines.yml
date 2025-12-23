@@ -112,6 +112,7 @@ stages:
         continueOnError: true
         steps:
         - task: PowerShell@2
+          displayName: infracost analysis
           inputs:
             targetType: 'inline'
             script: 'infracost breakdown --path $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
