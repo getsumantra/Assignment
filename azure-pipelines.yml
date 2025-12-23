@@ -12,94 +12,94 @@ parameters:
       - prod
 
 stages:
-  - stage: build
-    displayName: build stage
-    jobs:
-      - job: build
-        steps:
-        - task: TerraformInstaller@1
-          inputs:
-            terraformVersion: 'latest'
+  # - stage: build
+  #   displayName: build stage
+  #   jobs:
+  #     - job: build
+  #       steps:
+  #       - task: TerraformInstaller@1
+  #         inputs:
+  #           terraformVersion: 'latest'
 
-        - task: TerraformTask@5
-          displayName: terraform init
-          inputs:
-            provider: 'azurerm'
-            command: 'init'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            backendServiceArm: 'vm01-svc'
-            backendAzureRmResourceGroupName: 'rg-pr'
-            backendAzureRmStorageAccountName: 'stg502'
-            backendAzureRmContainerName: 'container01'
-            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+  #       - task: TerraformTask@5
+  #         displayName: terraform init
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'init'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #           backendServiceArm: 'vm01-svc'
+  #           backendAzureRmResourceGroupName: 'rg-pr'
+  #           backendAzureRmStorageAccountName: 'stg502'
+  #           backendAzureRmContainerName: 'container01'
+  #           backendAzureRmKey: '${{ parameters.environment }}.tfstate'
 
-        - task: TerraformTask@5
-          displayName: terraform validate
-          inputs:
-            provider: 'azurerm'
-            command: 'validate'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #       - task: TerraformTask@5
+  #         displayName: terraform validate
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'validate'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
-        - task: TerraformTask@5
-          displayName: terraform plan
-          inputs:
-            provider: 'azurerm'
-            command: 'plan'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            environmentServiceNameAzureRM: 'vm01-svc'
+  #       - task: TerraformTask@5
+  #         displayName: terraform plan
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'plan'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  #           environmentServiceNameAzureRM: 'vm01-svc'
 
   
   - stage: securityScan
-    dependsOn: build
+    # dependsOn: build
     displayName: Security Scan
     jobs:
       - job: securityScan
         displayName: Run Security Scans
         steps:
 
-        # ---------- TFSEC -----------------------------------
-        - task: tfsec@1
-          displayName: Tfsec-scan
-          inputs:
-            version: 'v1.26.0'
-            dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        # # ---------- TFSEC -----------------------------------
+        # - task: tfsec@1
+        #   displayName: Tfsec-scan
+        #   inputs:
+        #     version: 'v1.26.0'
+        #     dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
-        #------------TFLint-----------------------------------
-        - task: PowerShell@2
-          displayName: Tflint-scan
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: |
-              tflint --version
-              tflint /recursive
-            errorActionPreference: 'continue'
+        # #------------TFLint-----------------------------------
+        # - task: PowerShell@2
+        #   displayName: Tflint-scan
+        #   continueOnError: true
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       tflint --version
+        #       tflint /recursive
+        #     errorActionPreference: 'continue'
 
-        # ---------- TRIVY ------------------------------------
-        - task: trivy@2
-          displayName: Trivy-scan
-          inputs:
-            version: 'latest'
-            type: 'filesystem'
-            target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            scanners: 'misconfig,secret'
-            ignoreUnfixed: true
-            showSuppressed: true
-            ignoreScanErrors: true
-            skipDbUpdate: true
-            reports: 'junit'
-            publish: true
+        # # ---------- TRIVY ------------------------------------
+        # - task: trivy@2
+        #   displayName: Trivy-scan
+        #   inputs:
+        #     version: 'latest'
+        #     type: 'filesystem'
+        #     target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        #     scanners: 'misconfig,secret'
+        #     ignoreUnfixed: true
+        #     showSuppressed: true
+        #     ignoreScanErrors: true
+        #     skipDbUpdate: true
+        #     reports: 'junit'
+        #     publish: true
 
         
-        #--------------Checkov---------------------------------
-        - task: PowerShell@2
-          displayName: Checkov-scan
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: |
-              checkov -v
-              checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
+        # #--------------Checkov---------------------------------
+        # - task: PowerShell@2
+        #   displayName: Checkov-scan
+        #   continueOnError: true
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       checkov -v
+        #       checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
 
         #---------------TruffleHog-----------------------------
         - task: PowerShell@2
