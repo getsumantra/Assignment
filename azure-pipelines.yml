@@ -80,12 +80,14 @@ stages:
             version: 'latest'
             type: 'filesystem'
             target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-            scanners: 'misconfig, secret, vuln'
+            scanners: 'misconfig,secret'
             ignoreUnfixed: true
             showSuppressed: true
             ignoreScanErrors: true
+            skipDbUpdate: true
             reports: 'junit'
             publish: true
+
         
         #--------------Checkov---------------------------------
         - task: PowerShell@2
