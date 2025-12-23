@@ -101,7 +101,13 @@ stages:
               checkov -v
               checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
 
-        
+        #---------------TruffleHog-----------------------------
+        - task: PowerShell@2
+          displayName: TruffleHog-Secret-Scan
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: 'trufflehog filesystem . --json > results.json'
 
   - stage: infraCost
     displayName: infracost scan
