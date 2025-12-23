@@ -137,13 +137,17 @@ stages:
       - job: deployStage
         displayName: apply
         steps:
-        - task: DownloadBuildArtifacts@1
+        - task: TerraformTask@5
+          displayName: terraform init
           inputs:
-            buildType: 'current'
-            downloadType: 'single'
-            artifactName: 'build-artifacts'
-            downloadPath: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-        
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+            backendServiceArm: 'vm01-svc'
+            backendAzureRmResourceGroupName: 'rg-pr'
+            backendAzureRmStorageAccountName: 'stg502'
+            backendAzureRmContainerName: 'container01'
+            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
         - task: TerraformTask@5
           displayName: terraform apply
           inputs:
