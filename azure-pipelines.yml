@@ -101,7 +101,7 @@ stages:
             targetType: 'inline'
             script: |
               checkov -v
-              checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
+              checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o junitxml > checkovres.xml
 
         # ---------------TruffleHog-----Secret-Scan------------------------
         - task: PowerShell@2
