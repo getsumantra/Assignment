@@ -67,6 +67,7 @@ stages:
 
         #------------TFLint-----------------------------------
         - task: PowerShell@2
+          displayName: Tflint-scan
           inputs:
             targetType: 'inline'
             script: |
