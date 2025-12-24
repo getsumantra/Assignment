@@ -57,51 +57,53 @@ stages:
         displayName: Run Security Scans
         steps:
 
-        # # ---------- TFSEC -----------------------------------
-        # - task: tfsec@1
-        #   displayName: Tfsec-scan
-        #   inputs:
-        #     version: 'v1.26.0'
-        #     dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+        # ---------- TFSEC -----------------------------------
+        - task: tfsec@1
+          displayName: Tfsec-scan
+          inputs:
+            version: 'v1.26.0'
+            dir: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+            publishTestResults: true
 
-        # #------------TFLint-----------------------------------
-        # - task: PowerShell@2
-        #   displayName: Tflint-scan
-        #   continueOnError: true
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       tflint --version
-        #       tflint /recursive
-        #     errorActionPreference: 'continue'
+        #------------TFLint-----------------------------------
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: |
+              tflint --version
+              tflint /chdir: $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}
+              tflint /init
+              tflint /recursive
+              tflint /format:junit
+            errorActionPreference: 'continue'
 
-        # # ---------- TRIVY ------------------------------------
-        # - task: trivy@2
-        #   displayName: Trivy-scan
-        #   inputs:
-        #     version: 'latest'
-        #     type: 'filesystem'
-        #     target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
-        #     scanners: 'misconfig,secret'
-        #     ignoreUnfixed: true
-        #     showSuppressed: true
-        #     ignoreScanErrors: true
-        #     skipDbUpdate: true
-        #     reports: 'junit'
-        #     publish: true
+        # ---------- TRIVY ------------------------------------
+        - task: trivy@2
+          displayName: Trivy-scan
+          inputs:
+            version: 'latest'
+            type: 'filesystem'
+            target: '$(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+            scanners: 'misconfig,secret'
+            ignoreUnfixed: true
+            showSuppressed: true
+            ignoreScanErrors: true
+            skipDbUpdate: true
+            reports: 'junit'
+            publish: true
 
         
-        # #--------------Checkov---------------------------------
-        # - task: PowerShell@2
-        #   displayName: Checkov-scan
-        #   continueOnError: true
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       checkov -v
-        #       checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
+        #--------------Checkov---------------------------------
+        - task: PowerShell@2
+          displayName: Checkov-scan
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              checkov -v
+              checkov -d $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} -o Junit.xml > checkovres.xml
 
-        #---------------TruffleHog-----Secret-Scan------------------------
+        # ---------------TruffleHog-----Secret-Scan------------------------
         - task: PowerShell@2
           displayName: TruffleHog-Secret-Scan
           continueOnError: true
@@ -109,32 +111,32 @@ stages:
             targetType: 'inline'
             script: 'trufflehog filesystem . --json > results.json'
 
-  # - stage: infraCost
-  #   displayName: infracost scan
-  #   dependsOn: securityScan
-  #   jobs:
-  #     - job: infraCost
-  #       displayName: Infracost
-  #       continueOnError: true
-  #       steps:
-  #       - task: PowerShell@2
-  #         displayName: infracost analysis
-  #         inputs:
-  #           targetType: 'inline'
-  #           script: 'infracost breakdown --path $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
+  - stage: infraCost
+    displayName: infracost scan
+    dependsOn: securityScan
+    jobs:
+      - job: infraCost
+        displayName: Infracost
+        continueOnError: true
+        steps:
+        - task: PowerShell@2
+          displayName: infracost analysis
+          inputs:
+            targetType: 'inline'
+            script: 'infracost breakdown --path $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}'
 
 
-  # - stage: manualValidation
-  #   displayName: manual validation
-  #   dependsOn: securityScan
-  #   jobs:
-  #     - job: manulaValidation
-  #       pool: server
-  #       displayName: manual validation
-  #       steps:
-  #       - task: ManualValidation@1
-  #         inputs:
-  #           notifyUsers: 'getsumantra@gmail.com'
+  - stage: manualValidation
+    displayName: manual validation
+    dependsOn: securityScan
+    jobs:
+      - job: manulaValidation
+        pool: server
+        displayName: manual validation
+        steps:
+        - task: ManualValidation@1
+          inputs:
+            notifyUsers: 'getsumantra@gmail.com'
 
   # - stage: deployStage
   #   displayName: deploy stage
