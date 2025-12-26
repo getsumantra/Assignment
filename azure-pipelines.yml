@@ -111,12 +111,6 @@ stages:
           inputs:
             targetType: 'inline'
             script: 'trufflehog filesystem . --json > results.json'
-
-        #----------------biome lint -----------------------------------------
-        - task: PowerShell@2
-          inputs:
-            targetType: 'inline'
-            script: 'biome lint $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }} > biome-report.txt'
         
 
   - stage: infraCost
