@@ -32,7 +32,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'init'
-            workingDirectory: '$($(workdir))'
+            workingDirectory: '$(workdir)'
             backendServiceArm: '$(svc)'
             backendAzureRmResourceGroupName: 'rg-pr'
             backendAzureRmStorageAccountName: 'stg502'
