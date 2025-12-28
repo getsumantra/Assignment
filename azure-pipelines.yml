@@ -137,7 +137,7 @@ stages:
 
   - stage: manualValidation
     displayName: approval and governance
-    # dependsOn: securityScan
+    dependsOn: securityScan
     jobs:
       - job: manulaValidation
         pool: server
