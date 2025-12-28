@@ -54,74 +54,74 @@ stages:
             workingDirectory: '$(workdir)'
             environmentServiceNameAzureRM: '$(svc)'
 
-  # - stage: securityScan
-  #   # dependsOn: preCommit
-  #   displayName: Security Scan /linting
-  #   jobs:
-  #     - job: securityScan
-  #       displayName: Run Security Scans
-  #       steps:
+  - stage: securityScan
+    dependsOn: preCommit
+    displayName: Security Scan /linting
+    jobs:
+      - job: securityScan
+        displayName: Run Security Scans
+        steps:
 
-  #       # ---------- TFSEC -----------------------------------
-  #       - task: tfsec@1
-  #         displayName: Tfsec-scan
-  #         inputs:
-  #           version: 'v1.26.0'
-  #           dir: '$(workdir)'
-  #           publishTestResults: true
+        # ---------- TFSEC -----------------------------------
+        - task: tfsec@1
+          displayName: Tfsec-scan
+          inputs:
+            version: 'v1.26.0'
+            dir: '$(workdir)'
+            publishTestResults: true
 
-  #       #------------TFLint-----------------------------------
-  #       - task: PowerShell@2
-  #         displayName: Tflint-scan
-  #         inputs:
-  #           targetType: 'inline'
-  #           script: |
-  #             tflint --version
-  #             tflint --chdir=$(workdir)
-  #             tflint /init
-  #             tflint /recursive
-  #             tflint /format:junit
-  #           errorActionPreference: 'continue'
+        #------------TFLint-----------------------------------
+        - task: PowerShell@2
+          displayName: Tflint-scan
+          inputs:
+            targetType: 'inline'
+            script: |
+              tflint --version
+              tflint --chdir=$(workdir)
+              tflint /init
+              tflint /recursive
+              tflint /format:junit
+            errorActionPreference: 'continue'
 
-        # ---------- TRIVY ------------------------------------
-        # - task: trivy@2
-        #   displayName: Trivy-scan
-        #   inputs:
-        #     version: 'latest'
-        #     type: 'filesystem'
-        #     target: '$(workdir)'
-        #     scanners: 'misconfig,secret'
-        #     ignoreUnfixed: true
-        #     showSuppressed: true
-        #     ignoreScanErrors: true
-        #     skipDbUpdate: true
-        #     reports: 'junit'
-        #     publish: true
+        #---------- TRIVY ------------------------------------
+        - task: trivy@2
+          displayName: Trivy-scan
+          inputs:
+            version: 'latest'
+            type: 'filesystem'
+            target: '$(workdir)'
+            scanners: 'misconfig,secret'
+            ignoreUnfixed: true
+            showSuppressed: true
+            ignoreScanErrors: true
+            skipDbUpdate: true
+            reports: 'junit'
+            publish: true
 
         
-        # #--------------Checkov---------------------------------
-        # - task: PowerShell@2
-        #   displayName: Checkov-scan
-        #   continueOnError: true
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       checkov -v
-        #       checkov -d $(workdir) -o junitxml --output-file-path checkovres.xml
+        #--------------Checkov---------------------------------
+        - task: PowerShell@2
+          displayName: Checkov-scan
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              checkov -v
+              checkov -d $(workdir) -o junitxml --output-file-path checkovres.xml
 
-        # # ---------------TruffleHog-----Secret-Scan------------------------
-        # - task: PowerShell@2
-        #   displayName: TruffleHog-Secret-Scan
-        #   continueOnError: true
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: 'trufflehog filesystem . --json > results.json'
+        # ---------------TruffleHog-----Secret-Scan------------------------
+        - task: PowerShell@2
+          displayName: TruffleHog-Secret-Scan
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: 'trufflehog filesystem . --json > results.json'
         
 
-  # - stage: infraCost
-  #   displayName: infracost scan
-  #   dependsOn: securityScan
-  #   jobs:
+  - stage: infraCost
+    displayName: infracost scan
+    dependsOn: securityScan
+    jobs:
       - job: infraCost
         displayName: Infracost
         continueOnError: true
