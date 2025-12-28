@@ -78,7 +78,7 @@ stages:
             targetType: 'inline'
             script: |
               tflint --version
-              tflint /chdir: $(workdir)
+              tflint --chdir=$(workdir)
               tflint /init
               tflint /recursive
               tflint /format:junit
