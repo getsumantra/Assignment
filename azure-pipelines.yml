@@ -1,6 +1,6 @@
 trigger: none
 
-pool: vm-01
+pool: vm-agent
 
 parameters:
   - name: environment
@@ -33,7 +33,7 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$($(workdir))'
-            backendServiceArm: '$($(svc))'
+            backendServiceArm: '$(svc)'
             backendAzureRmResourceGroupName: 'rg-pr'
             backendAzureRmStorageAccountName: 'stg502'
             backendAzureRmContainerName: 'container01'
