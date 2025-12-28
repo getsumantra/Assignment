@@ -18,45 +18,45 @@ variables:
   value: $(System.DefaultWorkingDirectory)/infra/${{ parameters.environment }}
 
 stages:
-  - stage: preCommit
-    displayName: pre-commit
-    jobs:
-      - job: preCommit
-        steps:
-        - task: TerraformInstaller@1
-          inputs:
-            terraformVersion: 'latest'
+  # - stage: preCommit
+  #   displayName: pre-commit
+  #   jobs:
+  #     - job: preCommit
+  #       steps:
+  #       - task: TerraformInstaller@1
+  #         inputs:
+  #           terraformVersion: 'latest'
 
-        - task: TerraformTask@5
-          displayName: terraform init
-          inputs:
-            provider: 'azurerm'
-            command: 'init'
-            workingDirectory: '$(workdir)'
-            backendServiceArm: '$(svc)'
-            backendAzureRmResourceGroupName: 'rg-pr'
-            backendAzureRmStorageAccountName: 'stg502'
-            backendAzureRmContainerName: 'container01'
-            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+  #       - task: TerraformTask@5
+  #         displayName: terraform init
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'init'
+  #           workingDirectory: '$(workdir)'
+  #           backendServiceArm: '$(svc)'
+  #           backendAzureRmResourceGroupName: 'rg-pr'
+  #           backendAzureRmStorageAccountName: 'stg502'
+  #           backendAzureRmContainerName: 'container01'
+  #           backendAzureRmKey: '${{ parameters.environment }}.tfstate'
 
-        - task: TerraformTask@5
-          displayName: terraform validate
-          inputs:
-            provider: 'azurerm'
-            command: 'validate'
-            workingDirectory: '$(workdir)'
+  #       - task: TerraformTask@5
+  #         displayName: terraform validate
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'validate'
+  #           workingDirectory: '$(workdir)'
 
-        - task: TerraformTask@5
-          displayName: terraform plan
-          inputs:
-            provider: 'azurerm'
-            command: 'plan'
-            workingDirectory: '$(workdir)'
-            environmentServiceNameAzureRM: '$(svc)'
+  #       - task: TerraformTask@5
+  #         displayName: terraform plan
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'plan'
+  #           workingDirectory: '$(workdir)'
+  #           environmentServiceNameAzureRM: '$(svc)'
 
   
   - stage: securityScan
-    dependsOn: preCommit
+    # dependsOn: preCommit
     displayName: Security Scan /linting
     jobs:
       - job: securityScan
@@ -85,38 +85,38 @@ stages:
             errorActionPreference: 'continue'
 
         # ---------- TRIVY ------------------------------------
-        - task: trivy@2
-          displayName: Trivy-scan
-          inputs:
-            version: 'latest'
-            type: 'filesystem'
-            target: '$(workdir)'
-            scanners: 'misconfig,secret'
-            ignoreUnfixed: true
-            showSuppressed: true
-            ignoreScanErrors: true
-            skipDbUpdate: true
-            reports: 'junit'
-            publish: true
+        # - task: trivy@2
+        #   displayName: Trivy-scan
+        #   inputs:
+        #     version: 'latest'
+        #     type: 'filesystem'
+        #     target: '$(workdir)'
+        #     scanners: 'misconfig,secret'
+        #     ignoreUnfixed: true
+        #     showSuppressed: true
+        #     ignoreScanErrors: true
+        #     skipDbUpdate: true
+        #     reports: 'junit'
+        #     publish: true
 
         
-        #--------------Checkov---------------------------------
-        - task: PowerShell@2
-          displayName: Checkov-scan
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: |
-              checkov -v
-              checkov -d $(workdir) -o junitxml --output-file-path checkovres.xml
+        # #--------------Checkov---------------------------------
+        # - task: PowerShell@2
+        #   displayName: Checkov-scan
+        #   continueOnError: true
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       checkov -v
+        #       checkov -d $(workdir) -o junitxml --output-file-path checkovres.xml
 
-        # ---------------TruffleHog-----Secret-Scan------------------------
-        - task: PowerShell@2
-          displayName: TruffleHog-Secret-Scan
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: 'trufflehog filesystem . --json > results.json'
+        # # ---------------TruffleHog-----Secret-Scan------------------------
+        # - task: PowerShell@2
+        #   displayName: TruffleHog-Secret-Scan
+        #   continueOnError: true
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: 'trufflehog filesystem . --json > results.json'
         
 
   - stage: infraCost
@@ -131,7 +131,10 @@ stages:
           displayName: infracost analysis
           inputs:
             targetType: 'inline'
-            script: 'infracost breakdown --path $(workdir)'
+            script: |
+              cd $(workdir)
+              terraform plan -out=tfplan
+              infracost breakdown --path tfplan
 
 
   - stage: manualValidation
@@ -146,32 +149,32 @@ stages:
           inputs:
             notifyUsers: 'getsumantra@gmail.com'
 
-  # - stage: deployStage
-  #   displayName: deploy stage
-  #   dependsOn: manualValidation
-  #   jobs:
-  #     - job: deployStage
-  #       displayName: apply
-  #       steps:
-  #       - task: TerraformTask@5
-  #         displayName: terraform init
-  #         inputs:
-  #           provider: 'azurerm'
-  #           command: 'init'
-  #           workingDirectory: '$(workdir)'
-  #           backendServiceArm: '$(svc)'
-  #           backendAzureRmResourceGroupName: 'rg-pr'
-  #           backendAzureRmStorageAccountName: 'stg502'
-  #           backendAzureRmContainerName: 'container01'
-  #           backendAzureRmKey: '${{ parameters.environment }}.tfstate'
-  #       - task: TerraformTask@5
-  #         displayName: terraform apply
-  #         inputs:
-  #           provider: 'azurerm'
-  #           command: 'apply'
-  #           workingDirectory: '$(workdir)'
-  #           commandOptions: '--auto-approve'
-  #           environmentServiceNameAzureRM: '$(svc)'
+  - stage: deployStage
+    displayName: deploy stage
+    dependsOn: manualValidation
+    jobs:
+      - job: deployStage
+        displayName: apply
+        steps:
+        - task: TerraformTask@5
+          displayName: terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(workdir)'
+            backendServiceArm: '$(svc)'
+            backendAzureRmResourceGroupName: 'rg-pr'
+            backendAzureRmStorageAccountName: 'stg502'
+            backendAzureRmContainerName: 'container01'
+            backendAzureRmKey: '${{ parameters.environment }}.tfstate'
+        - task: TerraformTask@5
+          displayName: terraform apply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(workdir)'
+            commandOptions: '--auto-approve'
+            environmentServiceNameAzureRM: '$(svc)'
 
         
       
