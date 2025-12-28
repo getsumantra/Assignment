@@ -53,17 +53,7 @@ stages:
             command: 'plan'
             workingDirectory: '$(workdir)'
             environmentServiceNameAzureRM: '$(svc)'
-        
-        - task: PowerShell@2
-          displayName: infracost analysis
-          inputs:
-            targetType: 'inline'
-            script: |
-              cd $(workdir)
-              terraform plan -out=tfplan
-              infracost breakdown --path tfplan
 
-  
   # - stage: securityScan
   #   # dependsOn: preCommit
   #   displayName: Security Scan /linting
@@ -132,18 +122,17 @@ stages:
   #   displayName: infracost scan
   #   dependsOn: securityScan
   #   jobs:
-  #     - job: infraCost
-  #       displayName: Infracost
-  #       continueOnError: true
-  #       steps:
-  #       - task: PowerShell@2
-  #         displayName: infracost analysis
-  #         inputs:
-  #           targetType: 'inline'
-  #           script: |
-  #             cd $(workdir)
-  #             terraform plan -out=tfplan
-  #             infracost breakdown --path tfplan
+      - job: infraCost
+        displayName: Infracost
+        continueOnError: true
+        steps:
+        - task: PowerShell@2
+          displayName: infracost analysis
+          inputs:
+            targetType: 'inline'
+            script: |
+              cd $(workdir)
+              infracost breakdown --path tfplan
 
 
   - stage: manualValidation
