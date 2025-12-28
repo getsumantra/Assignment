@@ -119,22 +119,22 @@ stages:
         #     script: 'trufflehog filesystem . --json > results.json'
         
 
-  - stage: infraCost
-    displayName: infracost scan
-    dependsOn: securityScan
-    jobs:
-      - job: infraCost
-        displayName: Infracost
-        continueOnError: true
-        steps:
-        - task: PowerShell@2
-          displayName: infracost analysis
-          inputs:
-            targetType: 'inline'
-            script: |
-              cd $(workdir)
-              terraform plan -out=tfplan
-              infracost breakdown --path tfplan
+  # - stage: infraCost
+  #   displayName: infracost scan
+  #   dependsOn: securityScan
+  #   jobs:
+  #     - job: infraCost
+  #       displayName: Infracost
+  #       continueOnError: true
+  #       steps:
+  #       - task: PowerShell@2
+  #         displayName: infracost analysis
+  #         inputs:
+  #           targetType: 'inline'
+  #           script: |
+  #             cd $(workdir)
+  #             terraform plan -out=tfplan
+  #             infracost breakdown --path tfplan
 
 
   - stage: manualValidation
