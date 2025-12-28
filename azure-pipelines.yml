@@ -56,8 +56,8 @@ stages:
 
   
   - stage: securityScan
-    # dependsOn: preCommit
-    displayName: Security Scan
+    dependsOn: preCommit
+    displayName: Security Scan /linting
     jobs:
       - job: securityScan
         displayName: Run Security Scans
@@ -135,7 +135,7 @@ stages:
 
 
   - stage: manualValidation
-    displayName: manual validation
+    displayName: approval and governance
     dependsOn: securityScan
     jobs:
       - job: manulaValidation
